@@ -1,0 +1,8 @@
+all:
+  hosts:
+    swt1:
+      ansible_host: "ip_address_host"
+      ansible_network_os: cisco.ios.ios
+      ansible_port: 23
+      ansible_user: "user"
+      ansible_password: "password"

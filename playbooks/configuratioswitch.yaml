@@ -1,0 +1,171 @@
+---
+- name: Switch configuration steps
+  hosts: all
+  gather_facts: no
+  vars_files:
+    - ../variables/confswitchvars.yaml
+        
+  tasks:
+    
+    - name: Show IP interface brief on Cisco switch using Telnet
+      ansible.netcommon.telnet:
+        user: "{{ansible_user}}"
+        password: "{{ansible_password}}"
+        login_prompt: "Username: "
+        prompts:
+          - "[>#]"
+        command:
+          - show ip interface brief
+      register: showipinterface
+
+    - name: Display on terminal the result of the show ip interface brief command
+      debug:
+        var: showipinterface.stdout_lines
+      
+    - name: Create VLANs on Cisco switch using Telnet
+      ansible.netcommon.telnet:
+        user: "{{ ansible_user }}"
+        password: "{{ ansible_password }}"
+        login_prompt: "Username: "
+        prompts:
+          - "[>#]"
+          - "Switch#"
+          - "Switch(config)#"
+          - "Switch(config-vlan)#"
+        command: 
+          - conf t
+          - "{{ vlan_commands }}"
+          - exit
+          - write memory
+          - logout
+      vars:
+        vlan_commands: |
+          {% for vlan in networkconfig %}
+          vlan {{ vlan.id }}
+          name {{ vlan.name }}
+          exit
+          {% endfor %}
+      register: createvlans
+
+    - name: Show VLANs on Cisco switch using Telnet
+      ansible.netcommon.telnet:
+        user: "{{ ansible_user }}"
+        password: "{{ ansible_password }}"
+        login_prompt: "Username: "
+        prompts:
+          - "[>#]"
+        command:
+          - enable
+          - show vlan brief
+      register: showvlans
+
+    - name: Display on terminal the result of the show vlan brief command
+      debug:
+        var: showvlans.stdout_lines
+
+    - name: Enable IP routing for L3 on Cisco switch using Telnet
+      ansible.netcommon.telnet:
+        user: "{{ ansible_user }}"
+        password: "{{ ansible_password }}"
+        login_prompt: "Username: "
+        prompts:
+          - "[>#]"
+        command:
+          - enable
+          - conf t
+          - ip routing
+          - exit
+          - write memory
+      register: enableiprouting
+
+    - name: Configure VLANs on Cisco switch using Telnet
+      ansible.netcommon.telnet:
+        user: "{{ ansible_user }}"
+        password: "{{ ansible_password }}"
+        login_prompt: "Username: "
+        prompts:
+          - "[>#]"
+          - "Switch#"
+          - "Switch(config)#"
+          - "Switch(config-vlan)#"
+        command: 
+          - conf t
+          - "{{ vlanconf_commands }}"
+          - exit
+          - write memory
+          - logout
+      vars:
+        vlanconf_commands: |
+          {% for vlan in networkconfig %}
+          interface vlan {{ vlan.id }}
+          ip address {{ vlan.ip }} {{ vlan.mask }}
+          exit
+          {% endfor %}
+      register: configurevlans
+
+    - name: Enable VLANs on Cisco switch using Telnet
+      ansible.netcommon.telnet:
+        user: "{{ ansible_user }}"
+        password: "{{ ansible_password }}"
+        login_prompt: "Username: "
+        prompts:
+          - "[>#]"
+          - "Switch#"
+          - "Switch(config)#"
+          - "Switch(config-vlan)#"
+        command: 
+          - conf t
+          - "{{ vlanconf_commands }}"
+          - exit
+          - write memory
+          - logout
+      vars:
+        vlanconf_commands: |
+          {% for vlan in networkconfig %}
+          interface vlan {{ vlan.id }}
+          no shutdown
+          {% endfor %}
+      register: enablevlans
+
+    - name: Assign VLANs on interfaces for Cisco switch using Telnet
+      ansible.netcommon.telnet:
+        user: "{{ ansible_user }}"
+        password: "{{ ansible_password }}"
+        login_prompt: "Username: "
+        prompts:
+          - "[>#]"
+          - "Switch#"
+          - "Switch(config)#"
+          - "Switch(config-vlan)#"
+        command: 
+          - conf t
+          - "{{ vlanconf_commands }}"
+          - exit
+          - write memory
+          - logout
+      vars:
+        vlanconf_commands: |
+          {% for vlan in networkconfig %}
+          interface {{vlan.interface}}
+          switchport mode access
+          switchport access vlan {{vlan.id}}
+          no shutdown
+          exit
+          {% endfor %}
+      register: assignvlans
+
+    - name: Show VLANs again on Cisco switch using Telnet
+      ansible.netcommon.telnet:
+        user: "{{ ansible_user }}"
+        password: "{{ ansible_password }}"
+        login_prompt: "Username: "
+        prompts:
+          - "[>#]"
+        command:
+          - enable
+          - show vlan brief
+      register: showvlansagain
+
+    - name: Display again on terminal the result of the show vlan brief command
+      debug:
+        var: showvlansagain.stdout_lines

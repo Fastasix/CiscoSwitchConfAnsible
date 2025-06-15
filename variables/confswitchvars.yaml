@@ -1,0 +1,18 @@
+#Vars file for switch configuration
+
+networkconfig:
+      - id: 50
+        name: "Users"
+        ip: 192.168.50.1
+        mask: 255.255.255.0
+        interface: "GigabitEthernet0/1"
+      - id: 60
+        name: "Indus"
+        ip: 192.168.60.1
+        mask: 255.255.255.0
+        interface: "GigabitEthernet0/2"
+      - id: 70
+        name: "IT"
+        ip: 192.168.70.1
+        mask: 255.255.255.0
+        interface: "GigabitEthernet0/3"
